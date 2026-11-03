@@ -1547,16 +1547,16 @@ async function handleAutoInstallLib(libName: string, url: string) {
       downloadUrl: url,
     })
     await refreshAfterLibraryInstall()
-    toastStore.success(`Library berhasil di-install ke Custom Scenery: ${installedFolders.join(', ')}`)
+    toastStore.success(t('sceneryManager.libraryInstall.installedSuccess', { folders: installedFolders.join(', ') }))
   } catch (error) {
     const errMsg = getErrorMessage(error)
     if (errMsg.includes('NEEDS_BROWSER')) {
       toastStore.info(
-        'Link memerlukan download via browser (mis. login forum). Silakan unduh lalu klik "Install File (.zip/.7z)" di bawah.',
+        t('sceneryManager.libraryInstall.browserDownloadRequired'),
       )
       await handleDirectDownload(url)
     } else {
-      modalStore.showError(`Auto-install gagal: ${errMsg}`)
+      modalStore.showError(t('sceneryManager.libraryInstall.autoInstallFailed', { error: errMsg }))
     }
   } finally {
     const doneSet = new Set(installingLibs.value)
@@ -1589,10 +1589,10 @@ async function handleInstallLibArchiveFromDisk() {
     }
     await refreshAfterLibraryInstall()
     toastStore.success(
-      `Library berhasil diekstrak & di-install: ${allInstalled.join(', ')}`,
+      t('sceneryManager.libraryInstall.archiveInstalledSuccess', { folders: allInstalled.join(', ') }),
     )
   } catch (error) {
-    modalStore.showError(`Gagal meng-install arsip library: ${getErrorMessage(error)}`)
+    modalStore.showError(t('sceneryManager.libraryInstall.archiveInstallFailed', { error: getErrorMessage(error) }))
   } finally {
     isInstallingArchive.value = false
   }
@@ -1703,7 +1703,7 @@ async function openSmartRouteModal() {
 async function handleFetchSimbriefForRoute() {
   const pilotId = smartRoutePilotId.value.trim()
   if (!pilotId) {
-    toastStore.warning('Masukkan SimBrief Pilot ID atau Username terlebih dahulu')
+    toastStore.warning(t('sceneryManager.smartRoute.enterPilotIdWarning'))
     return
   }
   isFetchingSimbriefRoute.value = true
@@ -1720,7 +1720,7 @@ async function handleFetchSimbriefForRoute() {
       )
     }
   } catch (error) {
-    modalStore.showError(`Gagal mengambil data SimBrief: ${getErrorMessage(error)}`)
+    modalStore.showError(t('sceneryManager.smartRoute.simbriefFetchFailed', { error: getErrorMessage(error) }))
   } finally {
     isFetchingSimbriefRoute.value = false
   }
@@ -1736,7 +1736,7 @@ async function handleApplySmartRouteActivation() {
     .filter((s) => s.length >= 3 && s.length <= 4)
 
   if (rawIcaos.length === 0) {
-    toastStore.warning('Masukkan minimal 1 kode ICAO (mis. WIII / WADD)')
+    toastStore.warning(t('sceneryManager.smartRoute.minIcaoWarning'))
     return
   }
 
@@ -1818,7 +1818,7 @@ async function handleApplySmartRouteActivation() {
   syncLocalEntries()
   showSmartRouteModal.value = false
   toastStore.success(
-    `Smart Route diterapkan (${[...routeIcaos].join(' → ')}): ${enabledCount} diaktifkan, ${disabledCount} dinonaktifkan. Klik Apply untuk menyimpan ke scenery_packs.ini.`,
+    t('sceneryManager.smartRoute.routeAppliedToast', { route: [...routeIcaos].join(' → '), enabled: enabledCount, disabled: disabledCount }),
   )
 }
 
@@ -1841,7 +1841,7 @@ async function handleEnableAllSceneryFromRoute() {
   syncWarningDismissed.value = true
   syncLocalEntries()
   showSmartRouteModal.value = false
-  toastStore.success(`${changed} scenery diaktifkan kembali. Klik Apply untuk menyimpan.`)
+  toastStore.success(t('sceneryManager.smartRoute.allEnabledToast', { count: changed }))
 }
 
 async function handleSearchSingleLib(libName: string) {
@@ -2620,7 +2620,7 @@ onBeforeUnmount(() => {
       <button
         v-if="sceneryStore.indexExists"
         class="px-3 py-1.5 rounded-lg bg-violet-500 text-white hover:bg-violet-600 transition-colors flex items-center gap-1.5 text-sm"
-        title="Smart Route Scenery Activator (SimBrief / ICAO)"
+        :title="t('sceneryManager.smartRoute.buttonTooltip')"
         @click="openSmartRouteModal"
       >
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4199,7 +4199,7 @@ onBeforeUnmount(() => {
                     v-if="libraryLinksMap[lib]"
                     :disabled="installingLibs.has(lib)"
                     class="px-2 py-1 text-white rounded bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 transition-colors flex items-center gap-1 text-xs font-medium"
-                    title="Download & Auto-Install langsung ke Custom Scenery"
+                    :title="t('sceneryManager.libraryInstall.autoInstallTooltip')"
                     @click="handleAutoInstallLib(lib, libraryLinksMap[lib]!)"
                   >
                     <svg
@@ -4294,7 +4294,7 @@ onBeforeUnmount(() => {
             <button
               :disabled="isInstallingArchive"
               class="flex-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white text-sm rounded-lg transition-colors flex items-center justify-center gap-1.5"
-              title="Pilih file .zip atau .7z library yang sudah diunduh untuk di-install otomatis ke Custom Scenery"
+              :title="t('sceneryManager.libraryInstall.installArchiveTooltip')"
               @click="handleInstallLibArchiveFromDisk"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4306,7 +4306,7 @@ onBeforeUnmount(() => {
                 />
               </svg>
               <span>{{
-                isInstallingArchive ? 'Installing Archive...' : 'Install File (.zip/.7z)'
+                isInstallingArchive ? t('sceneryManager.libraryInstall.installingArchive') : t('sceneryManager.libraryInstall.installArchiveButton')
               }}</span>
             </button>
             <button
@@ -4361,10 +4361,10 @@ onBeforeUnmount(() => {
               </div>
               <div>
                 <h3 class="text-base font-semibold text-gray-900 dark:text-white leading-tight">
-                  Smart Route Scenery Activator
+                  {{ t('sceneryManager.smartRoute.title') }}
                 </h3>
                 <p class="text-xs text-gray-500 dark:text-gray-400">
-                  Aktifkan scenery sesuai rute terbang (SimBrief / ICAO) agar loading cepat & hemat VRAM
+                  {{ t('sceneryManager.smartRoute.subtitle') }}
                 </p>
               </div>
             </div>
@@ -4386,13 +4386,13 @@ onBeforeUnmount(() => {
           <!-- SimBrief Fetch Row -->
           <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 space-y-2">
             <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">
-              Impor Rute Otomatis dari SimBrief
+              {{ t('sceneryManager.smartRoute.importSimBrief') }}
             </label>
             <div class="flex gap-2">
               <input
                 v-model="smartRoutePilotId"
                 type="text"
-                placeholder="SimBrief Pilot ID / Username"
+                :placeholder="t('sceneryManager.smartRoute.pilotIdPlaceholder')"
                 class="flex-1 px-3 py-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-violet-500"
                 @keyup.enter="handleFetchSimbriefForRoute"
               />
@@ -4421,7 +4421,7 @@ onBeforeUnmount(() => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                   />
                 </svg>
-                <span>{{ isFetchingSimbriefRoute ? 'Fetching...' : 'Fetch SimBrief' }}</span>
+                <span>{{ isFetchingSimbriefRoute ? t('sceneryManager.smartRoute.fetching') : t('sceneryManager.smartRoute.fetchSimBrief') }}</span>
               </button>
             </div>
           </div>
@@ -4430,7 +4430,7 @@ onBeforeUnmount(() => {
           <div class="grid grid-cols-3 gap-2.5">
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                Departure ICAO
+                {{ t('sceneryManager.smartRoute.departureIcao') }}
               </label>
               <input
                 v-model="smartRouteDeparture"
@@ -4442,7 +4442,7 @@ onBeforeUnmount(() => {
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                Arrival ICAO
+                {{ t('sceneryManager.smartRoute.arrivalIcao') }}
               </label>
               <input
                 v-model="smartRouteArrival"
@@ -4454,7 +4454,7 @@ onBeforeUnmount(() => {
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-300 mb-1">
-                Alternate / Extra
+                {{ t('sceneryManager.smartRoute.alternateExtra') }}
               </label>
               <input
                 v-model="smartRouteAlternate"
@@ -4476,15 +4476,15 @@ onBeforeUnmount(() => {
               />
               <div class="text-xs">
                 <span class="font-medium text-gray-900 dark:text-gray-100">
-                  Sertakan City Landmarks & Paket Pendamping Bandara
+                  {{ t('sceneryManager.smartRoute.includeCompanionsTitle') }}
                 </span>
                 <span class="text-gray-500 dark:text-gray-400 block text-[11px]">
-                  Otomatis ikut mengaktifkan folder kota/landmark/overlay pasangan bandara (mis. 2_KDCA_City, 2-iniBuilds-Doha-City-Landmarks, RJTT_Overlays).
+                  {{ t('sceneryManager.smartRoute.includeCompanionsDesc') }}
                 </span>
               </div>
             </label>
             <label class="block text-xs font-medium text-gray-600 dark:text-gray-300">
-              Mode Aktivasi Scenery
+              {{ t('sceneryManager.smartRoute.modeTitle') }}
             </label>
             <div class="grid grid-cols-1 gap-2">
               <label
@@ -4503,10 +4503,10 @@ onBeforeUnmount(() => {
                 />
                 <div class="text-xs">
                   <div class="font-semibold text-gray-900 dark:text-gray-100">
-                    Rute + Benua Aktif (Recommended)
+                    {{ t('sceneryManager.smartRoute.modeRouteContinentTitle') }}
                   </div>
                   <div class="text-gray-500 dark:text-gray-400">
-                    Aktifkan bandara rute beserta seluruh scenery di benua yang dilewati; matikan bandara & mesh di benua lain. Library, Global Airports, Landmarks & AEP tetap aktif.
+                    {{ t('sceneryManager.smartRoute.modeRouteContinentDesc') }}
                   </div>
                 </div>
               </label>
@@ -4526,10 +4526,10 @@ onBeforeUnmount(() => {
                 />
                 <div class="text-xs">
                   <div class="font-semibold text-gray-900 dark:text-gray-100">
-                    Strict Route Only (Max FPS & Fast Loading)
+                    {{ t('sceneryManager.smartRoute.modeStrictRouteTitle') }}
                   </div>
                   <div class="text-gray-500 dark:text-gray-400">
-                    Hanya aktifkan Custom Airport yang cocok dengan ICAO Departure/Arrival/Alternate (+ Library, Global Airports & AEP). Custom Airport lain dinonaktifkan sementara.
+                    {{ t('sceneryManager.smartRoute.modeStrictRouteDesc') }}
                   </div>
                 </div>
               </label>
@@ -4542,7 +4542,7 @@ onBeforeUnmount(() => {
               class="px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/30 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-xs font-medium transition-colors"
               @click="handleEnableAllSceneryFromRoute"
             >
-              Enable All Scenery
+              {{ t('sceneryManager.smartRoute.enableAll') }}
             </button>
             <div class="flex gap-2">
               <button
@@ -4555,7 +4555,7 @@ onBeforeUnmount(() => {
                 class="px-4 py-1.5 rounded-lg bg-violet-500 hover:bg-violet-600 text-white text-xs font-medium transition-colors"
                 @click="handleApplySmartRouteActivation"
               >
-                Terapkan Rute
+                {{ t('sceneryManager.smartRoute.applyRoute') }}
               </button>
             </div>
           </div>
