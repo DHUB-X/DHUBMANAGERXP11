@@ -1,6 +1,6 @@
 {
   "productName": "DHUB Manager XP11",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "identifier": "com.dhubmanager.xp11",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -59,6 +59,12 @@
       "timestampUrl": "",
       "webviewInstallMode": {
         "type": "embedBootstrapper"
+      },
+      "wix": {
+        "upgradeCode": "B4E38F10-6C2A-4D78-9B21-8F35C7E8A011"
+      },
+      "nsis": {
+        "installMode": "perMachine"
       }
     },
     "macOS": {
