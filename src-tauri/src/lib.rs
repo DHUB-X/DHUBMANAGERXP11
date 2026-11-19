@@ -47,14 +47,10 @@ mod output_cleanup;
 mod scanner;
 
 // Installation
-#[path = "install/acf_engine_mod.rs"]
-mod acf_engine_mod;
 #[path = "install/atomic_installer.rs"]
 mod atomic_installer;
 #[path = "install/installer/mod.rs"]
 mod installer;
-#[path = "install/patch.rs"]
-mod patch;
 #[path = "install/verifier.rs"]
 mod verifier;
 
@@ -839,146 +835,6 @@ fn remove_defender_exclusion(path: String) -> Result<bool, String> {
 }
 
 // ============================================================================
-// Aircraft Patch & Sound Mod Pack Commands
-// ============================================================================
-
-#[tauri::command]
-async fn detect_patch_target_aircraft(
-    archive_path: String,
-    xplane_path: String,
-) -> Result<patch::TargetDetection, String> {
-    tokio::task::spawn_blocking(move || {
-        patch::detect_target_aircraft(std::path::Path::new(&archive_path), &xplane_path)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-    .map_err(|e| format!("Patch target detection failed: {}", e))
-}
-
-#[tauri::command]
-async fn infer_patch_mappings(
-    archive_path: String,
-    xplane_path: String,
-    aircraft_folder: String,
-) -> Result<patch::PatchPlan, String> {
-    tokio::task::spawn_blocking(move || {
-        patch::infer_mappings(
-            std::path::Path::new(&archive_path),
-            &xplane_path,
-            &aircraft_folder,
-        )
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-    .map_err(|e| format!("Patch mapping inference failed: {}", e))
-}
-
-#[tauri::command]
-async fn summarize_patch_install(
-    archive_path: String,
-    xplane_path: String,
-    aircraft_folder: String,
-    mappings: Vec<patch::PatchMappingInput>,
-) -> Result<patch::PatchInstallSummary, String> {
-    tokio::task::spawn_blocking(move || {
-        patch::summarize_install(
-            std::path::Path::new(&archive_path),
-            &xplane_path,
-            &aircraft_folder,
-            &mappings,
-        )
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-    .map_err(|e| format!("Patch summary failed: {}", e))
-}
-
-#[tauri::command]
-async fn build_patch_install_tasks(
-    archive_path: String,
-    password: Option<String>,
-    xplane_path: String,
-    aircraft_folder: String,
-    mappings: Vec<patch::PatchMappingInput>,
-    backup_overwritten: bool,
-    expected_plan_id: String,
-    clean_fmod: Option<bool>,
-) -> Result<Vec<InstallTask>, String> {
-    tokio::task::spawn_blocking(move || {
-        patch::build_install_tasks(
-            &archive_path,
-            password,
-            &xplane_path,
-            &aircraft_folder,
-            mappings,
-            backup_overwritten,
-            Some(&expected_plan_id),
-            clean_fmod.unwrap_or(false),
-        )
-    })
-    .await
-    .map_err(|e| format!("Task join error: {}", e))?
-    .map_err(|e| format!("Patch task build failed: {}", e))
-}
-
-#[tauri::command]
-async fn list_patch_backups(
-    xplane_path: String,
-    aircraft_folder: String,
-) -> Result<Vec<patch::PatchBackupSession>, String> {
-    tokio::task::spawn_blocking(move || {
-        patch::list_aircraft_backups(&xplane_path, &aircraft_folder)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {e}"))?
-    .map_err(|e| format!("Failed to list patch backups: {e:#}"))
-}
-
-#[tauri::command]
-async fn revert_patch(
-    xplane_path: String,
-    aircraft_folder: String,
-    session_id: String,
-    remove_added_files: Option<bool>,
-) -> Result<patch::PatchRestoreResult, String> {
-    tokio::task::spawn_blocking(move || {
-        patch::restore_aircraft_backup(
-            &xplane_path,
-            &aircraft_folder,
-            &session_id,
-            remove_added_files.unwrap_or(false),
-        )
-    })
-    .await
-    .map_err(|e| format!("Task join error: {e}"))?
-    .map_err(|e| format!("Failed to revert patch: {e:#}"))
-}
-
-#[tauri::command]
-async fn inspect_engine_mod(
-    source_path: String,
-    xplane_path: String,
-    aircraft_folder: String,
-) -> Result<acf_engine_mod::EngineModInspection, String> {
-    tokio::task::spawn_blocking(move || {
-        acf_engine_mod::inspect_engine_mod(&source_path, &xplane_path, &aircraft_folder)
-    })
-    .await
-    .map_err(|e| format!("Task join error: {e}"))?
-    .map_err(|e| format!("Failed to inspect engine mod: {e:#}"))
-}
-
-#[tauri::command]
-async fn apply_engine_mod(
-    request: acf_engine_mod::EngineModApplyRequest,
-) -> Result<acf_engine_mod::EngineModApplyResult, String> {
-    tokio::task::spawn_blocking(move || acf_engine_mod::apply_engine_mod(request))
-        .await
-        .map_err(|e| format!("Task join error: {e}"))?
-        .map_err(|e| format!("Failed to apply engine mod: {e:#}"))
-}
-
-// ============================================================================
 // Logging Commands
 // ============================================================================
 
@@ -1581,8 +1437,8 @@ mod log_analysis_tests {
     #[test]
     fn unfinished_xplane_log_is_detected_as_crash() {
         let result = analyze_log_lines(&[
-            "Log.txt for X-Plane 11.55r2",
-            "X-System folder:'C:\\X-Plane 11', case sensitive=0",
+            "Log.txt for X-Plane 12.4.0",
+            "X-System folder:'C:\\X-Plane 12', case sensitive=0",
             "0:00:01.000 I/FLT: Init flight",
             "0:00:02.000 I/SCN: Loading scenery",
         ]);
@@ -1603,8 +1459,8 @@ mod log_analysis_tests {
     #[test]
     fn normal_xplane_shutdown_marker_is_not_detected_as_crash() {
         let result = analyze_log_lines(&[
-            "Log.txt for X-Plane 11.55r2",
-            "X-System folder:'C:\\X-Plane 11', case sensitive=0",
+            "Log.txt for X-Plane 12.4.0",
+            "X-System folder:'C:\\X-Plane 12', case sensitive=0",
             "Plugin unload complete.",
             "Clean exit from threads.",
             "----- X-Plane has shut down -----",
@@ -1618,8 +1474,8 @@ mod log_analysis_tests {
     #[test]
     fn explicit_xplane_crash_marker_is_detected_as_crash() {
         let result = analyze_log_lines(&[
-            "Log.txt for X-Plane 11.55r2",
-            "X-System folder:'C:\\X-Plane 11', case sensitive=0",
+            "Log.txt for X-Plane 12.4.0",
+            "X-System folder:'C:\\X-Plane 12', case sensitive=0",
             "0:00:02.000 E/GFX: VK_ERROR_DEVICE_LOST",
             "--=={This application has crashed!}==--",
         ]);
@@ -2132,7 +1988,7 @@ async fn is_xplane_running() -> bool {
     }
 }
 
-const TARGET_XPLANE_VERSION: u8 = 11;
+const TARGET_XPLANE_VERSION: u8 = 12;
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
 pub struct PathValidationResult {
@@ -2266,7 +2122,7 @@ mod launch_tests {
     #[test]
     fn validate_xplane_path_accepts_prefixed_windows_executable() {
         let temp = tempfile::tempdir().unwrap();
-        std::fs::write(temp.path().join("X-Plane11.exe"), b"").unwrap();
+        std::fs::write(temp.path().join("X-Plane12.exe"), b"").unwrap();
 
         assert_eq!(
             validate_xplane_path(temp.path().display().to_string()).unwrap().valid,
@@ -4505,14 +4361,6 @@ pub fn run() {
             check_defender_exclusion,
             add_defender_exclusion,
             remove_defender_exclusion,
-            detect_patch_target_aircraft,
-            infer_patch_mappings,
-            summarize_patch_install,
-            build_patch_install_tasks,
-            list_patch_backups,
-            revert_patch,
-            inspect_engine_mod,
-            apply_engine_mod,
             doctor::doctor_scan_environment,
             doctor::doctor_inspect_installation,
             doctor::doctor_scan_xfast_health,
