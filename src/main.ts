@@ -201,6 +201,7 @@ const router = createRouter({
     { path: '/presets', component: () => import('./views/Presets.vue') },
     { path: '/gateway', component: preloadGateway },
     { path: '/log-analysis', component: () => import('./views/LogAnalysis.vue') },
+    { path: '/doctor', component: () => import('./views/Doctor.vue') },
     { path: '/stutter-detector', component: () => import('./views/StutterDetector.vue') },
     { path: '/activity', component: () => import('./views/ActivityLog.vue') },
     { path: '/screenshots', component: () => import('./views/ScreenshotManager.vue') },
