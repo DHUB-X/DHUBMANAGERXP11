@@ -1,6 +1,6 @@
 [package]
 name = "dhub-manager"
-version = "1.2.2"
+version = "1.2.3"
 description = "DHUB Manager XP11 - X-Plane 11 Addon Auto Manager"
 authors = ["DHUB Aviation"]
 edition = "2021"
